@@ -4,13 +4,30 @@ import { Calculator, TrendingDown, FileText } from 'lucide-react';
 export default function TaxCalculator() {
     const [name, setName] = useState('');
     const [monthlyRate, setMonthlyRate] = useState('30000');
+    const [department, setDepartment] = useState('Technical');
     const [daysAbsent, setDaysAbsent] = useState('0');
     const [minutesLate, setMinutesLate] = useState('0');
-    const [mealAllowance, setMealAllowance] = useState('27');
+    const [mealAllowance, setMealAllowance] = useState('0');
     const [regularOT, setRegularOT] = useState('0');
+    const [restDayOT, setRestDayOT] = useState('0');
     const [results, setResults] = useState(null);
     const [submitting, setSubmitting] = useState(false);
     const [submitMessage, setSubmitMessage] = useState('');
+    const handleChangeNonNegative = (setValue, integer = false) => (e) => {
+        const raw = e.target.value;
+        if (raw === '') {
+            setValue('');
+            return;
+        }
+        let num = integer ? parseInt(raw) : parseFloat(raw);
+        if (Number.isNaN(num) || num < 0) {
+            num = 0;
+        }
+        if (integer) {
+            num = Math.floor(num);
+        }
+        setValue(String(num));
+    };
 
     const calculateSSS = (grossPay) => {
         const sssTable = [
@@ -95,6 +112,7 @@ export default function TaxCalculator() {
         const late = parseInt(minutesLate) || 0;
         const meal = parseFloat(mealAllowance) || 0;
         const ot = parseFloat(regularOT) || 0;
+        const restOt = parseFloat(restDayOT) || 0;
 
         // Calculate rates - using semi-monthly (24 pay periods per year)
         const dailyRate = (monthly * 12) / 261; // 261 working days per year
@@ -104,7 +122,7 @@ export default function TaxCalculator() {
         const absentAmount = dailyRate * absent;
         const lateAmount = minuteRate * late;
         const totalMealAllowance = renderedDays * meal;
-        const grossPay = (monthly / 2) + ot - absentAmount - lateAmount;
+        const grossPay = (monthly / 2) + ot + restOt - absentAmount - lateAmount;
         const sss = calculateSSS(grossPay);
         const philhealth = calculatePhilHealth(monthly);
         const pagibig = calculatePagIbig();
@@ -132,9 +150,11 @@ export default function TaxCalculator() {
             shuttleAllocation,
             totalDeductions,
             netPay,
-            compensationLevel
+            compensationLevel,
+            restDayOT: restOt,
+            department
         });
-    }, [monthlyRate, daysAbsent, minutesLate, mealAllowance, regularOT]);
+    }, [monthlyRate, daysAbsent, minutesLate, mealAllowance, regularOT, restDayOT]);
 
     useEffect(() => {
         calculate();
@@ -153,6 +173,7 @@ export default function TaxCalculator() {
             const payload = {
                 timestamp: new Date().toISOString(),
                 name,
+                department,
                 monthlyRate: results.monthlyRate,
                 dailyRate: results.dailyRate,
                 hourlyRate: results.hourlyRate,
@@ -170,6 +191,8 @@ export default function TaxCalculator() {
                 totalDeductions: results.totalDeductions,
                 netPay: results.netPay,
                 compensationLevel: results.compensationLevel,
+                regularOT: parseFloat(regularOT) || 0,
+                restDayOT: parseFloat(restDayOT) || 0,
             };
             // Abort after 12s to avoid hanging UI
             const controller = new AbortController();
@@ -356,6 +379,19 @@ export default function TaxCalculator() {
                         </h2>
 
                         <div style={styles.inputGroup}>
+                            <label style={styles.label}>Department</label>
+                            <select
+                                value={department}
+                                onChange={(e) => setDepartment(e.target.value)}
+                                style={{ ...styles.input, appearance: 'auto' }}
+                            >
+                                <option value="Technical">Technical</option>
+                                <option value="Support">Support</option>
+                                <option value="Production">Production</option>
+                            </select>
+                        </div>
+
+                        <div style={styles.inputGroup}>
                             <label style={styles.label}>Name</label>
                             <input
                                 type="text"
@@ -370,8 +406,10 @@ export default function TaxCalculator() {
                             <label style={styles.label}>Monthly Rate (₱)</label>
                             <input
                                 type="number"
+                                min="0"
+                                step="0.01"
                                 value={monthlyRate}
-                                onChange={(e) => setMonthlyRate(e.target.value)}
+                                onChange={handleChangeNonNegative(setMonthlyRate, false)}
                                 style={styles.input}
                                 placeholder="30000"
                             />
@@ -381,8 +419,10 @@ export default function TaxCalculator() {
                             <label style={styles.label}>Number of Days Absent</label>
                             <input
                                 type="number"
+                                min="0"
+                                step="1"
                                 value={daysAbsent}
-                                onChange={(e) => setDaysAbsent(e.target.value)}
+                                onChange={handleChangeNonNegative(setDaysAbsent, true)}
                                 style={styles.input}
                                 placeholder="0"
                             />
@@ -392,8 +432,10 @@ export default function TaxCalculator() {
                             <label style={styles.label}>Number of Minutes Late</label>
                             <input
                                 type="number"
+                                min="0"
+                                step="1"
                                 value={minutesLate}
-                                onChange={(e) => setMinutesLate(e.target.value)}
+                                onChange={handleChangeNonNegative(setMinutesLate, true)}
                                 style={styles.input}
                                 placeholder="0"
                             />
@@ -403,10 +445,12 @@ export default function TaxCalculator() {
                             <label style={styles.label}>Meal Allowance Per Day (₱)</label>
                             <input
                                 type="number"
+                                min="0"
+                                step="0.01"
                                 value={mealAllowance}
-                                onChange={(e) => setMealAllowance(e.target.value)}
+                                onChange={handleChangeNonNegative(setMealAllowance, false)}
                                 style={styles.input}
-                                placeholder="27"
+                                placeholder="0"
                             />
                         </div>
 
@@ -414,8 +458,23 @@ export default function TaxCalculator() {
                             <label style={styles.label}>Regular Overtime (₱)</label>
                             <input
                                 type="number"
+                                min="0"
+                                step="0.01"
                                 value={regularOT}
-                                onChange={(e) => setRegularOT(e.target.value)}
+                                onChange={handleChangeNonNegative(setRegularOT, false)}
+                                style={styles.input}
+                                placeholder="0"
+                            />
+                        </div>
+
+                        <div style={styles.inputGroup}>
+                            <label style={styles.label}>Rest Day Overtime (₱)</label>
+                            <input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                value={restDayOT}
+                                onChange={handleChangeNonNegative(setRestDayOT, false)}
                                 style={styles.input}
                                 placeholder="0"
                             />
@@ -450,6 +509,10 @@ export default function TaxCalculator() {
                                 <div style={styles.row}>
                                     <span style={styles.rowLabel}>Late Amount:</span>
                                     <span style={{...styles.rowValue, color: '#dc2626'}}>₱ {results.lateAmount.toFixed(2)}</span>
+                                </div>
+                                <div style={styles.row}>
+                                    <span style={styles.rowLabel}>Rest Day Overtime:</span>
+                                    <span style={{...styles.rowValue, color: '#16a34a'}}>₱ {results.restDayOT.toFixed(2)}</span>
                                 </div>
                                 <div style={styles.row}>
                                     <span style={styles.rowLabel}>Total Meal Allowance:</span>
