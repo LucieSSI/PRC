@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Calculator, TrendingDown, FileText } from 'lucide-react';
+import { Calculator, TrendingDown, FileText, Clock } from 'lucide-react';
+import OvertimeCalculator from './OvertimeCalculator';
 
 export default function TaxCalculator() {
+    const [currentPage, setCurrentPage] = useState('tax');
     const [name, setName] = useState('');
     const [monthlyRate, setMonthlyRate] = useState('30000');
     const [department, setDepartment] = useState('Technical');
@@ -360,6 +362,10 @@ export default function TaxCalculator() {
         }
     };
 
+    if (currentPage === 'overtime') {
+        return <OvertimeCalculator onBack={() => setCurrentPage('tax')} />;
+    }
+
     return (
         <div style={styles.container}>
             <div style={styles.innerContainer}>
@@ -369,6 +375,27 @@ export default function TaxCalculator() {
                         <h1>Philippine Tax Calculator</h1>
                     </div>
                     <p style={styles.subtitle}>Calculate your SSS, PhilHealth, Pag-IBIG, and Income Tax</p>
+                    <button
+                        onClick={() => setCurrentPage('overtime')}
+                        style={{
+                            marginTop: '1rem',
+                            padding: '0.75rem 1.5rem',
+                            background: 'rgba(255, 255, 255, 0.2)',
+                            border: 'none',
+                            borderRadius: '8px',
+                            color: 'white',
+                            cursor: 'pointer',
+                            fontSize: '1rem',
+                            fontWeight: '500',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.5rem',
+                            margin: '1rem auto 0'
+                        }}
+                    >
+                        <Clock size={20} />
+                        Go to Overtime Calculator
+                    </button>
                 </div>
 
                 <div style={styles.gridMd}>
