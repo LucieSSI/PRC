@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Clock, Calendar, ArrowLeft } from 'lucide-react';
 
 export default function OvertimeCalculator({ onBack }) {
@@ -24,101 +24,71 @@ export default function OvertimeCalculator({ onBack }) {
         setValue(String(num));
     };
 
-    const calculateRegularOvertime = useCallback(() => {
-        const rate = parseFloat(hourlyRate) || 0;
-        const hours = parseFloat(totalHours) || 0;
-
-        if (hours <= 0) {
-            setResults(null);
-            return;
-        }
-
-        let first8Hours = 0;
-        let succeedingHours = 0;
-        let first8Pay = 0;
-        let succeedingPay = 0;
-
-        if (hours <= 8) {
-            first8Hours = hours;
-            first8Pay = rate * 1.25 * first8Hours; // 125% for regular overtime
-        } else {
-            first8Hours = 8;
-            succeedingHours = hours - 8;
-            first8Pay = rate * 1.25 * first8Hours; // 125% for first 8 hours
-            succeedingPay = rate * 1.30 * succeedingHours; // 130% for succeeding hours
-        }
-
-        const totalPay = first8Pay + succeedingPay;
-
-        setResults({
-            hourlyRate: rate,
-            totalHours: hours,
-            first8Hours,
-            succeedingHours,
-            first8Pay,
-            succeedingPay,
-            totalPay,
-            type: 'regular'
-        });
-    }, [hourlyRate, totalHours]);
-
-    const calculateRestDayOvertime = useCallback(() => {
-        const rate = parseFloat(hourlyRate) || 0;
-        const hours = parseFloat(totalHours) || 0;
-
-        if (hours <= 0) {
-            setResults(null);
-            return;
-        }
-
-        // Premium rates based on the chart
-        const premiumRates = {
-            'rest-day': { first8: 1.30, succeeding: 1.69 },
-            'special-holiday': { first8: 1.30, succeeding: 1.69 },
-            'special-holiday-rest-day': { first8: 1.69, succeeding: 1.95 },
-            'legal-holiday': { first8: 2.00, succeeding: 2.60 },
-            'legal-holiday-rest-day': { first8: 2.60, succeeding: 3.38 }
-        };
-
-        const rates = premiumRates[holidayType];
-        let first8Hours = 0;
-        let succeedingHours = 0;
-        let first8Pay = 0;
-        let succeedingPay = 0;
-
-        if (hours <= 8) {
-            first8Hours = hours;
-            first8Pay = rate * rates.first8 * first8Hours;
-        } else {
-            first8Hours = 8;
-            succeedingHours = hours - 8;
-            first8Pay = rate * rates.first8 * first8Hours;
-            succeedingPay = rate * rates.succeeding * succeedingHours;
-        }
-
-        const totalPay = first8Pay + succeedingPay;
-
-        setResults({
-            hourlyRate: rate,
-            totalHours: hours,
-            first8Hours,
-            succeedingHours,
-            first8Pay,
-            succeedingPay,
-            totalPay,
-            holidayType,
-            rates,
-            type: 'rest-day'
-        });
-    }, [hourlyRate, totalHours, holidayType]);
-
+    // Calculate results whenever inputs change
     useEffect(() => {
-        if (activeTab === 'regular') {
-            calculateRegularOvertime();
-        } else {
-            calculateRestDayOvertime();
+        const rate = parseFloat(hourlyRate) || 0;
+        const hours = parseFloat(totalHours) || 0;
+
+        if (hours <= 0) {
+            setResults(null);
+            return;
         }
-    }, [activeTab, calculateRegularOvertime, calculateRestDayOvertime]);
+
+        let first8Hours = 0;
+        let succeedingHours = 0;
+        let first8Pay = 0;
+        let succeedingPay = 0;
+        let rates = null;
+
+        if (activeTab === 'regular') {
+            // Regular overtime rates
+            if (hours <= 8) {
+                first8Hours = hours;
+                first8Pay = rate * 1.25 * first8Hours; // 125% for regular overtime
+            } else {
+                first8Hours = 8;
+                succeedingHours = hours - 8;
+                first8Pay = rate * 1.25 * first8Hours; // 125% for first 8 hours
+                succeedingPay = rate * 1.30 * succeedingHours; // 130% for succeeding hours
+            }
+        } else {
+            // Rest day overtime rates
+            const premiumRates = {
+                'rest-day': { first8: 1.30, succeeding: 1.69 },
+                'special-holiday': { first8: 1.30, succeeding: 1.69 },
+                'special-holiday-rest-day': { first8: 1.69, succeeding: 1.95 },
+                'legal-holiday': { first8: 2.00, succeeding: 2.60 },
+                'legal-holiday-rest-day': { first8: 2.60, succeeding: 3.38 }
+            };
+
+            rates = premiumRates[holidayType];
+            
+            if (hours <= 8) {
+                first8Hours = hours;
+                first8Pay = rate * rates.first8 * first8Hours;
+            } else {
+                first8Hours = 8;
+                succeedingHours = hours - 8;
+                first8Pay = rate * rates.first8 * first8Hours;
+                succeedingPay = rate * rates.succeeding * succeedingHours;
+            }
+        }
+
+        const totalPay = first8Pay + succeedingPay;
+
+        setResults({
+            hourlyRate: rate,
+            totalHours: hours,
+            first8Hours,
+            succeedingHours,
+            first8Pay,
+            succeedingPay,
+            totalPay,
+            holidayType: activeTab === 'rest-day' ? holidayType : null,
+            rates,
+            type: activeTab
+        });
+    }, [activeTab, hourlyRate, totalHours, holidayType]);
 
     const styles = {
         container: {
@@ -451,7 +421,7 @@ export default function OvertimeCalculator({ onBack }) {
                                 <p style={styles.totalPaySubtext}>
                                     {activeTab === 'regular' 
                                         ? '125% for first 8 hours, 130% for succeeding hours'
-                                        : `${Math.round(results.rates.first8 * 100)}% for first 8 hours, ${Math.round(results.rates.succeeding * 100)}% for succeeding hours`
+                                        : results.rates ? `${Math.round(results.rates.first8 * 100)}% for first 8 hours, ${Math.round(results.rates.succeeding * 100)}% for succeeding hours` : ''
                                     }
                                 </p>
                             </div>
