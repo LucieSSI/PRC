@@ -233,7 +233,7 @@ export default function TaxCalculator() {
             color: 'white'
         },
         title: {
-            fontSize: '2.5rem',
+            fontSize: 'xxx-large',
             fontWeight: 'bold',
             marginBottom: '0.5rem',
             display: 'flex',
@@ -373,7 +373,7 @@ export default function TaxCalculator() {
                 <div style={styles.header}>
                     <div style={styles.title}>
                         <Calculator size={40} />
-                        <h1 style="font-size: xxx-large">Philippine Tax Calculator</h1>
+                        <h1>Philippine Tax Calculator</h1>
                     </div>
                     <p style={styles.subtitle}>Calculate your SSS, PhilHealth, Pag-IBIG, and Income Tax</p>
                     <button
