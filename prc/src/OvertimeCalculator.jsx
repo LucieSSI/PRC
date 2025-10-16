@@ -236,6 +236,9 @@ export default function OvertimeCalculator({ onBack }) {
             fontSize: '0.875rem',
             opacity: '0.9'
         },
+        headingOne: {
+            fontSize: 'xxx-large'
+        },
         holidayTypeCard: {
             background: '#fef3c7',
             borderRadius: '8px',
@@ -274,7 +277,7 @@ export default function OvertimeCalculator({ onBack }) {
                 <div style={styles.header}>
                     <div style={styles.title}>
                         <Clock size={40} />
-                        <h1>Overtime Calculator</h1>
+                        <h1 style={styles.headingOne}>Overtime Calculator</h1>
                     </div>
                     <p style={styles.subtitle}>Calculate Regular and Rest Day Overtime Pay</p>
                 </div>
