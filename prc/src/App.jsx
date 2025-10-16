@@ -130,7 +130,8 @@ export default function TaxCalculator() {
         const pagibig = calculatePagIbig();
         const compensationLevel = grossPay - sss - philhealth - pagibig;
         const taxBase = compensationLevel;
-        const tax = calculateTax(taxBase);
+        const taxSemi = calculateTax(taxBase);
+        const tax = taxSemi * 2;
         const shuttleAllocation = 10 * 10;
         const totalDeductions = sss + philhealth + pagibig + tax + shuttleAllocation;
         const netPay = grossPay - totalDeductions;
