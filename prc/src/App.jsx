@@ -233,7 +233,7 @@ export default function TaxCalculator() {
             color: 'white'
         },
         title: {
-            fontSize: '2.5rem',
+            fontSize: 'xxx-large',
             fontWeight: 'bold',
             marginBottom: '0.5rem',
             display: 'flex',
