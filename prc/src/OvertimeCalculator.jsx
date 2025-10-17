@@ -106,7 +106,7 @@ export default function OvertimeCalculator({ onBack }) {
             color: 'white'
         },
         title: {
-            fontSize: 'xxx-large',
+            fontSize: 'large',
             fontWeight: 'bold',
             marginBottom: '0.5rem',
             display: 'flex',
