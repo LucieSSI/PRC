@@ -1,17 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Calculator, TrendingDown, FileText, Clock } from 'lucide-react';
-import OvertimeCalculator from './OvertimeCalculator';
+import { Calculator, TrendingDown, FileText } from 'lucide-react';
 
 export default function TaxCalculator() {
-    const [currentPage, setCurrentPage] = useState('tax');
     const [name, setName] = useState('');
-    const [monthlyRate, setMonthlyRate] = useState('30000');
     const [department, setDepartment] = useState('Technical');
     const [daysAbsent, setDaysAbsent] = useState('0');
     const [minutesLate, setMinutesLate] = useState('0');
     const [mealAllowance, setMealAllowance] = useState('0');
-    const [regularOT, setRegularOT] = useState('0');
-    const [restDayOT, setRestDayOT] = useState('0');
+    const [regularOTHours, setRegularOTHours] = useState('0');
+    const [restDayOTHours, setRestDayOTHours] = useState('0');
+    const [restDayOTType, setRestDayOTType] = useState('rest-day');
     const [results, setResults] = useState(null);
     const [submitting, setSubmitting] = useState(false);
     const [submitMessage, setSubmitMessage] = useState('');
@@ -31,113 +29,207 @@ export default function TaxCalculator() {
         setValue(String(num));
     };
 
-    const calculateSSS = (grossPay) => {
+    const calculateSSS = (monthlyRate) => {
+        // Updated SSS table based on 2025 schedule - focusing on employee contributions only
         const sssTable = [
-            { min: 0, max: 4249.99, contribution: 180 },
-            { min: 4250, max: 4749.99, contribution: 202.50 },
-            { min: 4750, max: 5249.99, contribution: 225 },
-            { min: 5250, max: 5749.99, contribution: 247.50 },
-            { min: 5750, max: 6249.99, contribution: 270 },
-            { min: 6250, max: 6749.99, contribution: 292.50 },
-            { min: 6750, max: 7249.99, contribution: 315 },
-            { min: 7250, max: 7749.99, contribution: 337.50 },
-            { min: 7750, max: 8249.99, contribution: 360 },
-            { min: 8250, max: 8749.99, contribution: 382.50 },
-            { min: 8750, max: 9249.99, contribution: 405 },
-            { min: 9250, max: 9749.99, contribution: 427.50 },
-            { min: 9750, max: 10249.99, contribution: 450 },
-            { min: 10250, max: 10749.99, contribution: 472.50 },
-            { min: 10750, max: 11249.99, contribution: 495 },
-            { min: 11250, max: 11749.99, contribution: 517.50 },
-            { min: 11750, max: 12249.99, contribution: 540 },
-            { min: 12250, max: 12749.99, contribution: 562.50 },
-            { min: 12750, max: 13249.99, contribution: 585 },
-            { min: 13250, max: 13749.99, contribution: 607.50 },
-            { min: 13750, max: 14249.99, contribution: 630 },
-            { min: 14250, max: 14749.99, contribution: 652.50 },
-            { min: 14750, max: 15249.99, contribution: 675 },
-            { min: 15250, max: 15749.99, contribution: 697.50 },
-            { min: 15750, max: 16249.99, contribution: 720 },
-            { min: 16250, max: 16749.99, contribution: 742.50 },
-            { min: 16750, max: 17249.99, contribution: 765 },
-            { min: 17250, max: 17749.99, contribution: 787.50 },
-            { min: 17750, max: 18249.99, contribution: 810 },
-            { min: 18250, max: 18749.99, contribution: 832.50 },
-            { min: 18750, max: 19249.99, contribution: 855 },
-            { min: 19250, max: 19749.99, contribution: 877.50 },
-            { min: 19750, max: Infinity, contribution: 900 }
+            { min: 0, max: 5249.99, contribution: 250 }, // Below 5,250 - 5,000 MSC, Employee: 250
+            { min: 5250, max: 5749.99, contribution: 275 }, // 5,250-5,749.99 - 5,500 MSC, Employee: 275
+            { min: 5750, max: 6249.99, contribution: 300 }, // 5,750-6,249.99 - 6,000 MSC, Employee: 300
+            { min: 6250, max: 6749.99, contribution: 325 }, // 6,250-6,749.99 - 6,500 MSC, Employee: 325
+            { min: 6750, max: 7249.99, contribution: 350 }, // 6,750-7,249.99 - 7,000 MSC, Employee: 350
+            { min: 7250, max: 7749.99, contribution: 375 }, // 7,250-7,749.99 - 7,500 MSC, Employee: 375
+            { min: 7750, max: 8249.99, contribution: 400 }, // 7,750-8,249.99 - 8,000 MSC, Employee: 400
+            { min: 8250, max: 8749.99, contribution: 425 }, // 8,250-8,749.99 - 8,500 MSC, Employee: 425
+            { min: 8750, max: 9249.99, contribution: 450 }, // 8,750-9,249.99 - 9,000 MSC, Employee: 450
+            { min: 9250, max: 9749.99, contribution: 475 }, // 9,250-9,749.99 - 9,500 MSC, Employee: 475
+            { min: 9750, max: 10249.99, contribution: 500 }, // 9,750-10,249.99 - 10,000 MSC, Employee: 500
+            { min: 10250, max: 10749.99, contribution: 525 }, // 10,250-10,749.99 - 10,500 MSC, Employee: 525
+            { min: 10750, max: 11249.99, contribution: 550 }, // 10,750-11,249.99 - 11,000 MSC, Employee: 550
+            { min: 11250, max: 11749.99, contribution: 575 }, // 11,250-11,749.99 - 11,500 MSC, Employee: 575
+            { min: 11750, max: 12249.99, contribution: 600 }, // 11,750-12,249.99 - 12,000 MSC, Employee: 600
+            { min: 12250, max: 12749.99, contribution: 625 }, // 12,250-12,749.99 - 12,500 MSC, Employee: 625
+            { min: 12750, max: 13249.99, contribution: 650 }, // 12,750-13,249.99 - 13,000 MSC, Employee: 650
+            { min: 13250, max: 13749.99, contribution: 675 }, // 13,250-13,749.99 - 13,500 MSC, Employee: 675
+            { min: 13750, max: 14249.99, contribution: 700 }, // 13,750-14,249.99 - 14,000 MSC, Employee: 700
+            { min: 14250, max: 14749.99, contribution: 725 }, // 14,250-14,749.99 - 14,500 MSC, Employee: 725
+            { min: 14750, max: 15249.99, contribution: 750 }, // 14,750-15,249.99 - 15,000 MSC, Employee: 750
+            { min: 15250, max: 15749.99, contribution: 775 }, // 15,250-15,749.99 - 15,500 MSC, Employee: 775
+            { min: 15750, max: 16249.99, contribution: 800 }, // 15,750-16,249.99 - 16,000 MSC, Employee: 800
+            { min: 16250, max: 16749.99, contribution: 825 }, // 16,250-16,749.99 - 16,500 MSC, Employee: 825
+            { min: 16750, max: 17249.99, contribution: 850 }, // 16,750-17,249.99 - 17,000 MSC, Employee: 850
+            { min: 17250, max: 17749.99, contribution: 875 }, // 17,250-17,749.99 - 17,500 MSC, Employee: 875
+            { min: 17750, max: 18249.99, contribution: 900 }, // 17,750-18,249.99 - 18,000 MSC, Employee: 900
+            { min: 18250, max: 18749.99, contribution: 925 }, // 18,250-18,749.99 - 18,500 MSC, Employee: 925
+            { min: 18750, max: 19249.99, contribution: 950 }, // 18,750-19,249.99 - 19,000 MSC, Employee: 950
+            { min: 19250, max: 19749.99, contribution: 975 }, // 19,250-19,749.99 - 19,500 MSC, Employee: 975
+            { min: 19750, max: 20249.99, contribution: 1000 }, // 19,750-20,249.99 - 20,000 MSC, Employee: 1000
+            { min: 20250, max: 20749.99, contribution: 1025 }, // 20,250-20,749.99 - 20,500 MSC, Employee: 1000+25
+            { min: 20750, max: 21249.99, contribution: 1050 }, // 20,750-21,249.99 - 21,000 MSC, Employee: 1000+50
+            { min: 21250, max: 21749.99, contribution: 1075 }, // 21,250-21,749.99 - 21,500 MSC, Employee: 1000+75
+            { min: 21750, max: 22249.99, contribution: 1100 }, // 21,750-22,249.99 - 22,000 MSC, Employee: 1000+100
+            { min: 22250, max: 22749.99, contribution: 1125 }, // 22,250-22,749.99 - 22,500 MSC, Employee: 1000+125
+            { min: 22750, max: 23249.99, contribution: 1150 }, // 22,750-23,249.99 - 23,000 MSC, Employee: 1000+150
+            { min: 23250, max: 23749.99, contribution: 1175 }, // 23,250-23,749.99 - 23,500 MSC, Employee: 1000+175
+            { min: 23750, max: 24249.99, contribution: 1200 }, // 23,750-24,249.99 - 24,000 MSC, Employee: 1000+200
+            { min: 24250, max: 24749.99, contribution: 1225 }, // 24,250-24,749.99 - 24,500 MSC, Employee: 1000+225
+            { min: 24750, max: 25249.99, contribution: 1250 }, // 24,750-25,249.99 - 25,000 MSC, Employee: 1000+250
+            { min: 25250, max: 25749.99, contribution: 1275 }, // 25,250-25,749.99 - 25,500 MSC, Employee: 1000+275
+            { min: 25750, max: 26249.99, contribution: 1300 }, // 25,750-26,249.99 - 26,000 MSC, Employee: 1000+300
+            { min: 26250, max: 26749.99, contribution: 1325 }, // 26,250-26,749.99 - 26,500 MSC, Employee: 1000+325
+            { min: 26750, max: 27249.99, contribution: 1350 }, // 26,750-27,249.99 - 27,000 MSC, Employee: 1000+350
+            { min: 27250, max: 27749.99, contribution: 1375 }, // 27,250-27,749.99 - 27,500 MSC, Employee: 1000+375
+            { min: 27750, max: 28249.99, contribution: 1400 }, // 27,750-28,249.99 - 28,000 MSC, Employee: 1000+400
+            { min: 28250, max: 28749.99, contribution: 1425 }, // 28,250-28,749.99 - 28,500 MSC, Employee: 1000+425
+            { min: 28750, max: 29249.99, contribution: 1450 }, // 28,750-29,249.99 - 29,000 MSC, Employee: 1000+450
+            { min: 29250, max: 29749.99, contribution: 1475 }, // 29,250-29,749.99 - 29,500 MSC, Employee: 1000+475
+            { min: 29750, max: 30249.99, contribution: 1500 }, // 29,750-30,249.99 - 30,000 MSC, Employee: 1000+500
+            { min: 30250, max: 30749.99, contribution: 1525 }, // 30,250-30,749.99 - 30,500 MSC, Employee: 1000+525
+            { min: 30750, max: 31249.99, contribution: 1550 }, // 30,750-31,249.99 - 31,000 MSC, Employee: 1000+550
+            { min: 31250, max: 31749.99, contribution: 1575 }, // 31,250-31,749.99 - 31,500 MSC, Employee: 1000+575
+            { min: 31750, max: 32249.99, contribution: 1600 }, // 31,750-32,249.99 - 32,000 MSC, Employee: 1000+600
+            { min: 32250, max: 32749.99, contribution: 1625 }, // 32,250-32,749.99 - 32,500 MSC, Employee: 1000+625
+            { min: 32750, max: 33249.99, contribution: 1650 }, // 32,750-33,249.99 - 33,000 MSC, Employee: 1000+650
+            { min: 33250, max: 33749.99, contribution: 1675 }, // 33,250-33,749.99 - 33,500 MSC, Employee: 1000+675
+            { min: 33750, max: 34249.99, contribution: 1700 }, // 33,750-34,249.99 - 34,000 MSC, Employee: 1000+700
+            { min: 34250, max: 34749.99, contribution: 1725 }, // 34,250-34,749.99 - 34,500 MSC, Employee: 1000+725
+            { min: 34750, max: Infinity, contribution: 1750 } // 34,750 and over - 35,000 MSC, Employee: 1000+750
         ];
 
         for (let bracket of sssTable) {
-            if (grossPay >= bracket.min && grossPay <= bracket.max) {
+            if (monthlyRate >= bracket.min && monthlyRate <= bracket.max) {
                 return bracket.contribution;
             }
         }
-        return 900;
+        return 1750; // Default for highest bracket
     };
 
     const calculatePhilHealth = (monthlyRate) => {
+        // Based on new formula from image
         if (monthlyRate <= 10000) {
-            return 137.5;
-        } else if (monthlyRate > 10000 && monthlyRate <= 100000.01) {
-            return monthlyRate * 0.01375;
+            return 500; // Fixed deduction for bracket 1
+        } else if (monthlyRate > 10000 && monthlyRate <= 99999.99) {
+            return monthlyRate * 0.05; // 5% for bracket 2
         } else {
-            return 550;
+            return 5000; // Fixed deduction for bracket 3 (100,000 and above)
         }
     };
 
-    const calculatePagIbig = () => {
-        return 100;
+    const calculatePagIbig = (monthlyRate) => {
+        // Based on new Pag-IBIG table from image
+        if (monthlyRate <= 1500) {
+            return monthlyRate * 0.01; // 1% for bracket 1
+        } else if (monthlyRate > 1500 && monthlyRate <= 10000) {
+            return monthlyRate * 0.02; // 2% for bracket 2, but cap at 200 for rates above 10,000
+        } else {
+            return 200; // Cap at 200 PHP for rates 10,000 and above
+        }
     };
 
-    const calculateTax = (taxableIncome) => {
+    const calculateTax = (taxBase) => {
+        // Updated tax brackets based on new semi-monthly formula from image
         const taxBrackets = [
-            { min: 0, max: 10417, base: 0, rate: 0, excess: 0 },
-            { min: 10417, max: 16667, base: 0, rate: 0.15, excess: 10417 },
-            { min: 16667, max: 33333, base: 937.50, rate: 0.20, excess: 16667 },
-            { min: 33333, max: 83333, base: 4270.83, rate: 0.25, excess: 33333 },
-            { min: 83333, max: 333333, base: 16770.83, rate: 0.30, excess: 83333 },
-            { min: 333333, max: Infinity, base: 91770.83, rate: 0.35, excess: 333333 }
+            { min: 0, max: 10417, compensationLevel: 0, rate: 0, additional: 0 },
+            { min: 10417, max: 16667, compensationLevel: 10417, rate: 0.20, additional: 0 },
+            { min: 16667, max: 33333, compensationLevel: 16667, rate: 0.25, additional: 1250.00 },
+            { min: 33333, max: 83333, compensationLevel: 33333, rate: 0.30, additional: 5416.67 },
+            { min: 83333, max: 333333, compensationLevel: 83333, rate: 0.32, additional: 20416.67 },
+            { min: 333333, max: Infinity, compensationLevel: 333333, rate: 0.35, additional: 100416.67 }
         ];
 
         for (let bracket of taxBrackets) {
-            if (taxableIncome > bracket.min && taxableIncome <= bracket.max) {
-                return bracket.base + (taxableIncome - bracket.excess) * bracket.rate;
+            if (taxBase > bracket.min && taxBase <= bracket.max) {
+                // Formula: (Tax Base - Compensation Level) x Tax Rate + Additional
+                return (taxBase - bracket.compensationLevel) * bracket.rate + bracket.additional;
             }
         }
         return 0;
     };
 
+    // Check if employee is a leader for 5% increase
+    const isLeader = (employeeName) => {
+        if (!employeeName) return false;
+        const nameLower = employeeName.toLowerCase();
+        // Match using paired keywords (order-insensitive, case-insensitive);
+        // only apply when BOTH keywords for a leader are present.
+        const leaderKeywordPairs = [
+            ['isiah', 'mendez'],
+            ['gene', 'sarmiento'],
+            ['chester', 'etac'],
+            ['efraim', 'echipare']
+        ];
+        return leaderKeywordPairs.some(([firstKeyword, secondKeyword]) =>
+            nameLower.includes(firstKeyword) && nameLower.includes(secondKeyword)
+        );
+    };
+
     const calculate = useCallback(() => {
-        const monthly = parseFloat(monthlyRate) || 0;
         const absent = parseInt(daysAbsent) || 0;
         const late = parseInt(minutesLate) || 0;
         const meal = parseFloat(mealAllowance) || 0;
-        const ot = parseFloat(regularOT) || 0;
-        const restOt = parseFloat(restDayOT) || 0;
+        const otHours = parseFloat(regularOTHours) || 0;
+        const restOtHours = parseFloat(restDayOTHours) || 0;
 
-        // Calculate rates - using semi-monthly (24 pay periods per year)
-        const dailyRate = (monthly * 12) / 261; // 261 working days per year
+        // Daily rate is constant at 550, with 5% increase for leaders
+        let baseDailyRate = 550;
+        if (isLeader(name)) {
+            baseDailyRate = baseDailyRate * 1.05; // 5% increase for leaders
+        }
+        
+        // Calculate monthly and hourly rates from daily rate
+        const dailyRate = baseDailyRate;
+        const monthlyRateFromDaily = (dailyRate * 261) / 12; // 261 working days per year
         const hourlyRate = dailyRate / 8;
         const minuteRate = hourlyRate / 60;
-        const renderedDays = 11 - absent; // 11 working days in semi-monthly period
+        const renderedDays = 10 - absent; // 10 working days in semi-monthly period
         const absentAmount = dailyRate * absent;
         const lateAmount = minuteRate * late;
         const totalMealAllowance = renderedDays * meal;
-        const grossPay = (monthly / 2) + ot + restOt - absentAmount - lateAmount;
-        const sss = calculateSSS(grossPay);
-        const philhealth = calculatePhilHealth(monthly);
-        const pagibig = calculatePagIbig();
-        const compensationLevel = grossPay - sss - philhealth - pagibig;
-        const taxBase = compensationLevel;
-        const taxSemi = calculateTax(taxBase);
-        const tax = taxSemi * 2;
+        // Compute overtime pay from hours
+        let regularOTPay = 0;
+        if (otHours > 0) {
+            if (otHours <= 8) {
+                regularOTPay = hourlyRate * 1.25 * otHours;
+            } else {
+                const first8 = 8;
+                const succeeding = otHours - 8;
+                regularOTPay = (hourlyRate * 1.25 * first8) + (hourlyRate * 1.30 * succeeding);
+            }
+        }
+
+        let restDayOTPay = 0;
+        if (restOtHours > 0) {
+            const premiumRates = {
+                'rest-day': { first8: 1.30, succeeding: 1.69 },
+                'special-holiday': { first8: 1.30, succeeding: 1.69 },
+                'special-holiday-rest-day': { first8: 1.69, succeeding: 1.95 },
+                'legal-holiday': { first8: 2.00, succeeding: 2.60 },
+                'legal-holiday-rest-day': { first8: 2.60, succeeding: 3.38 }
+            };
+            const rates = premiumRates[restDayOTType];
+            if (restOtHours <= 8) {
+                restDayOTPay = hourlyRate * rates.first8 * restOtHours;
+            } else {
+                const first8 = 8;
+                const succeeding = restOtHours - 8;
+                restDayOTPay = (hourlyRate * rates.first8 * first8) + (hourlyRate * rates.succeeding * succeeding);
+            }
+        }
+
+        // Use the calculated monthly rate from daily rate for gross pay calculation
+        const grossPay = (monthlyRateFromDaily / 2) + regularOTPay + restDayOTPay - absentAmount - lateAmount;
+        const sss = calculateSSS(monthlyRateFromDaily);
+        const philhealth = calculatePhilHealth(monthlyRateFromDaily);
+        const pagibig = calculatePagIbig(monthlyRateFromDaily);
+        // Tax Base = Gross Pay - (SSS + PhilHealth + Pag-IBIG + Total Meal Allowance)
+        const taxBase = grossPay - sss - philhealth - pagibig - totalMealAllowance;
+        const tax = calculateTax(taxBase); // This is already semi-monthly tax, but we need monthly
+        const monthlyTax = tax * 2; // Convert semi-monthly to monthly
         const shuttleAllocation = 10 * 10;
-        const totalDeductions = sss + philhealth + pagibig + tax + shuttleAllocation;
+        const totalDeductions = sss + philhealth + pagibig + monthlyTax + shuttleAllocation;
         const netPay = grossPay - totalDeductions;
 
         setResults({
-            monthlyRate: monthly,
+            monthlyRate: monthlyRateFromDaily,
             dailyRate,
             hourlyRate,
             minuteRate,
@@ -149,15 +241,19 @@ export default function TaxCalculator() {
             sss,
             philhealth,
             pagibig,
-            tax,
+            tax: monthlyTax,
             shuttleAllocation,
             totalDeductions,
             netPay,
-            compensationLevel,
-            restDayOT: restOt,
+            compensationLevel: taxBase,
+            regularOTHours: otHours,
+            restDayOTHours: restOtHours,
+            restDayOTType,
+            regularOTPay,
+            restDayOTPay,
             department
         });
-    }, [monthlyRate, daysAbsent, minutesLate, mealAllowance, regularOT, restDayOT]);
+    }, [daysAbsent, minutesLate, mealAllowance, regularOTHours, restDayOTHours, restDayOTType, name]);
 
     useEffect(() => {
         calculate();
@@ -194,8 +290,11 @@ export default function TaxCalculator() {
                 totalDeductions: results.totalDeductions,
                 netPay: results.netPay,
                 compensationLevel: results.compensationLevel,
-                regularOT: parseFloat(regularOT) || 0,
-                restDayOT: parseFloat(restDayOT) || 0,
+                regularOTHours: results.regularOTHours,
+                regularOTPay: results.regularOTPay,
+                restDayOTHours: results.restDayOTHours,
+                restDayOTType: results.restDayOTType,
+                restDayOTPay: results.restDayOTPay,
             };
             // Abort after 12s to avoid hanging UI
             const controller = new AbortController();
@@ -363,10 +462,6 @@ export default function TaxCalculator() {
         }
     };
 
-    if (currentPage === 'overtime') {
-        return <OvertimeCalculator onBack={() => setCurrentPage('tax')} />;
-    }
-
     return (
         <div style={styles.container}>
             <div style={styles.innerContainer}>
@@ -375,28 +470,7 @@ export default function TaxCalculator() {
                         <Calculator size={40} />
                         <h1>Philippine Tax Calculator</h1>
                     </div>
-                    <p style={styles.subtitle}>Calculate your SSS, PhilHealth, Pag-IBIG, and Income Tax</p>
-                    <button
-                        onClick={() => setCurrentPage('overtime')}
-                        style={{
-                            marginTop: '1rem',
-                            padding: '0.75rem 1.5rem',
-                            background: 'rgba(255, 255, 255, 0.2)',
-                            border: 'none',
-                            borderRadius: '8px',
-                            color: 'white',
-                            cursor: 'pointer',
-                            fontSize: '1rem',
-                            fontWeight: '500',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.5rem',
-                            margin: '1rem auto 0'
-                        }}
-                    >
-                        <Clock size={20} />
-                        Go to Overtime Calculator
-                    </button>
+                    <p style={styles.subtitle}>Calculate your SSS, PhilHealth, Pag-IBIG, Income Tax, and Overtime</p>
                 </div>
 
                 <div style={styles.gridMd}>
@@ -431,16 +505,16 @@ export default function TaxCalculator() {
                         </div>
 
                         <div style={styles.inputGroup}>
-                            <label style={styles.label}>Monthly Rate (₱)</label>
-                            <input
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                value={monthlyRate}
-                                onChange={handleChangeNonNegative(setMonthlyRate, false)}
-                                style={styles.input}
-                                placeholder="30000"
-                            />
+                            <label style={styles.label}>Daily Rate (₱)</label>
+                            <div style={{
+                                ...styles.input, 
+                                backgroundColor: '#f3f4f6', 
+                                display: 'flex', 
+                                alignItems: 'center',
+                                color: '#374151'
+                            }}>
+                                {isLeader(name) ? '₱ 577.50 (Leader rate)' : '₱ 550.00 (Standard rate)'}
+                            </div>
                         </div>
 
                         <div style={styles.inputGroup}>
@@ -483,26 +557,41 @@ export default function TaxCalculator() {
                         </div>
 
                         <div style={styles.inputGroup}>
-                            <label style={styles.label}>Regular Overtime (₱)</label>
+                            <label style={styles.label}>Regular Overtime Hours</label>
                             <input
                                 type="number"
                                 min="0"
-                                step="0.01"
-                                value={regularOT}
-                                onChange={handleChangeNonNegative(setRegularOT, false)}
+                                step="0.25"
+                                value={regularOTHours}
+                                onChange={handleChangeNonNegative(setRegularOTHours, false)}
                                 style={styles.input}
                                 placeholder="0"
                             />
                         </div>
 
                         <div style={styles.inputGroup}>
-                            <label style={styles.label}>Rest Day Overtime (₱)</label>
+                            <label style={styles.label}>Rest Day Overtime Type</label>
+                            <select
+                                value={restDayOTType}
+                                onChange={(e) => setRestDayOTType(e.target.value)}
+                                style={{ ...styles.input, appearance: 'auto' }}
+                            >
+                                <option value="rest-day">Rest Day / Sunday</option>
+                                <option value="special-holiday">Special Holiday</option>
+                                <option value="special-holiday-rest-day">Special Holiday & Rest Day</option>
+                                <option value="legal-holiday">Legal Holiday</option>
+                                <option value="legal-holiday-rest-day">Legal Holiday & Rest Day</option>
+                            </select>
+                        </div>
+                        
+                        <div style={styles.inputGroup}>
+                            <label style={styles.label}>Rest Day Overtime Hours</label>
                             <input
                                 type="number"
                                 min="0"
-                                step="0.01"
-                                value={restDayOT}
-                                onChange={handleChangeNonNegative(setRestDayOT, false)}
+                                step="0.25"
+                                value={restDayOTHours}
+                                onChange={handleChangeNonNegative(setRestDayOTHours, false)}
                                 style={styles.input}
                                 placeholder="0"
                             />
@@ -538,18 +627,35 @@ export default function TaxCalculator() {
                                     <span style={styles.rowLabel}>Late Amount:</span>
                                     <span style={{...styles.rowValue, color: '#dc2626'}}>₱ {results.lateAmount.toFixed(2)}</span>
                                 </div>
-                                <div style={styles.row}>
-                                    <span style={styles.rowLabel}>Rest Day Overtime:</span>
-                                    <span style={{...styles.rowValue, color: '#16a34a'}}>₱ {results.restDayOT.toFixed(2)}</span>
-                                </div>
+                                
                                 <div style={styles.row}>
                                     <span style={styles.rowLabel}>Total Meal Allowance:</span>
                                     <span style={{...styles.rowValue, color: '#16a34a'}}>₱ {results.totalMealAllowance.toFixed(2)}</span>
                                 </div>
-                                <div style={styles.grossPayBox}>
-                                    <span style={styles.grossPayLabel}>GROSS PAY:</span>
-                                    <span style={styles.grossPayValue}>₱ {results.grossPay.toFixed(2)}</span>
-                                </div>
+                            <div style={styles.row}>
+                                <span style={styles.rowLabel}>Regular OT Hours:</span>
+                                <span style={styles.rowValue}>{results.regularOTHours} hrs</span>
+                            </div>
+                            <div style={styles.row}>
+                                <span style={styles.rowLabel}>Regular OT Pay:</span>
+                                <span style={{...styles.rowValue, color: '#16a34a'}}>₱ {results.regularOTPay.toFixed(2)}</span>
+                            </div>
+                            <div style={styles.row}>
+                                <span style={styles.rowLabel}>Rest Day OT Hours:</span>
+                                <span style={styles.rowValue}>{results.restDayOTHours} hrs</span>
+                            </div>
+                            <div style={styles.row}>
+                                <span style={styles.rowLabel}>Rest Day OT Type:</span>
+                                <span style={styles.rowValue}>{restDayOTType}</span>
+                            </div>
+                            <div style={styles.row}>
+                                <span style={styles.rowLabel}>Rest Day OT Pay:</span>
+                                <span style={{...styles.rowValue, color: '#16a34a'}}>₱ {results.restDayOTPay.toFixed(2)}</span>
+                            </div>
+                            <div style={styles.grossPayBox}>
+                                <span style={styles.grossPayLabel}>GROSS PAY:</span>
+                                <span style={styles.grossPayValue}>₱ {results.grossPay.toFixed(2)}</span>
+                            </div>
                             </div>
 
                             <div style={styles.card}>

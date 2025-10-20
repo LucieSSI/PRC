@@ -273,7 +273,7 @@ export default function OvertimeCalculator({ onBack }) {
                         <Clock size={40} />
                         <h1>Overtime Calculator</h1>
                     </div>
-                    <p style={styles.subtitle}>Calculate Regular and Rest Day Overtime Pay</p>
+                    <p style={styles.subtitle}>Calculate Regular and Rest Day Overtime Hours</p>
                 </div>
 
                 <div style={styles.tabContainer}>
@@ -412,7 +412,7 @@ export default function OvertimeCalculator({ onBack }) {
 
                             <div style={styles.totalPayCard}>
                                 <h2 style={styles.totalPayTitle}>
-                                    {activeTab === 'regular' ? 'REGULAR OVERTIME PAY' : 'REST DAY OVERTIME PAY'}
+                                    {activeTab === 'regular' ? 'REGULAR OVERTIME HOURS' : 'REST DAY OVERTIME HOURS'}
                                 </h2>
                                 <p style={styles.totalPayValue}>₱ {results.totalPay.toFixed(2)}</p>
                                 <p style={styles.totalPaySubtext}>
