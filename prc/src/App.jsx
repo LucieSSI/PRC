@@ -216,16 +216,16 @@ export default function TaxCalculator() {
 }
 
 // Use the calculated monthly rate from daily rate for gross pay calculation
-const grossPay = (baseDailyRate * 10) + regularOTPay + restDayOTPay - absentAmount - lateAmount; // Adjust back to old afterwards
+const grossPay = (baseDailyRate * 10) + regularOTPay + restDayOTPay  + totalMealAllowance; // Adjust back to old afterwards
         const sss = calculateSSS(monthlyRateFromDaily);
         const philhealth = calculatePhilHealth(monthlyRateFromDaily);
         const pagibig = calculatePagIbig(monthlyRateFromDaily);
         // Tax Base = Gross Pay - (SSS + PhilHealth + Pag-IBIG + Total Meal Allowance)
-        const taxBase = grossPay - sss - philhealth - pagibig - totalMealAllowance;
+        const taxBase = grossPay - sss - philhealth - pagibig;
         const tax = calculateTax(taxBase); // This is already semi-monthly tax, but we need monthly
         const monthlyTax = tax * 2; // Convert semi-monthly to monthly
         const shuttleAllocation = 0;
-        const totalDeductions = sss + philhealth + pagibig + monthlyTax + shuttleAllocation;
+        const totalDeductions = sss + philhealth + pagibig + monthlyTax + shuttleAllocation + absentAmount + lateAmount;
         const netPay = grossPay - totalDeductions;
 
         setResults({
@@ -620,15 +620,6 @@ const grossPay = (baseDailyRate * 10) + regularOTPay + restDayOTPay - absentAmou
                                     <span style={styles.rowValue}>{results.renderedDays} days</span>
                                 </div>
                                 <div style={styles.row}>
-                                    <span style={styles.rowLabel}>Absent Amount:</span>
-                                    <span style={{...styles.rowValue, color: '#dc2626'}}>₱ {results.absentAmount.toFixed(2)}</span>
-                                </div>
-                                <div style={styles.row}>
-                                    <span style={styles.rowLabel}>Late Amount:</span>
-                                    <span style={{...styles.rowValue, color: '#dc2626'}}>₱ {results.lateAmount.toFixed(2)}</span>
-                                </div>
-                                
-                                <div style={styles.row}>
                                     <span style={styles.rowLabel}>Total Meal Allowance:</span>
                                     <span style={{...styles.rowValue, color: '#16a34a'}}>₱ {results.totalMealAllowance.toFixed(2)}</span>
                                 </div>
@@ -660,7 +651,7 @@ const grossPay = (baseDailyRate * 10) + regularOTPay + restDayOTPay - absentAmou
 
                             <div style={styles.card}>
                                 <h2 style={styles.cardTitle}>
-                                    <TrendingDown size={24} color="#dc2626" />
+                                    <TrendingDown size={24} color="#dc2626"/>
                                     Deductions
                                 </h2>
 
@@ -684,6 +675,20 @@ const grossPay = (baseDailyRate * 10) + regularOTPay + restDayOTPay - absentAmou
                                     <span style={styles.rowLabel}>Shuttle Allocation:</span>
                                     <span style={styles.rowValue}>₱ {results.shuttleAllocation.toFixed(2)}</span>
                                 </div>
+                                <div style={styles.row}>
+                                    <span style={styles.rowLabel}>Absent Amount:</span>
+                                    <span style={{
+                                        ...styles.rowValue,
+                                        color: '#dc2626'
+                                    }}>₱ {results.absentAmount.toFixed(2)}</span>
+                                </div>
+                                <div style={styles.row}>
+                                    <span style={styles.rowLabel}>Late Amount:</span>
+                                    <span style={{
+                                        ...styles.rowValue,
+                                        color: '#dc2626'
+                                    }}>₱ {results.lateAmount.toFixed(2)}</span>
+                                </div>
                                 <div style={styles.deductionBox}>
                                     <span style={styles.deductionLabel}>Total Deductions:</span>
                                     <span style={styles.deductionValue}>₱ {results.totalDeductions.toFixed(2)}</span>
@@ -694,7 +699,12 @@ const grossPay = (baseDailyRate * 10) + regularOTPay + restDayOTPay - absentAmou
                                 <h2 style={styles.netPayTitle}>NET PAY</h2>
                                 <p style={styles.netPayValue}>₱ {results.netPay.toFixed(2)}</p>
                                 <p style={styles.netPaySubtext}>Take-home pay after all deductions</p>
-                                <div style={{ marginTop: '0.75rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                <div style={{
+                                    marginTop: '0.75rem',
+                                    display: 'flex',
+                                    gap: '0.5rem',
+                                    alignItems: 'center'
+                                }}>
                                     <button
                                         onClick={handleSaveToSheets}
                                         disabled={submitting}
