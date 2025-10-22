@@ -6,7 +6,6 @@ export default function TaxCalculator() {
     const [department, setDepartment] = useState('Technical');
     const [daysAbsent, setDaysAbsent] = useState('0');
     const [minutesLate, setMinutesLate] = useState('0');
-    const [mealAllowance, setMealAllowance] = useState('0');
     const [regularOTHours, setRegularOTHours] = useState('0');
     const [restDayOTHours, setRestDayOTHours] = useState('0');
     const [restDayOTType, setRestDayOTType] = useState('rest-day');
@@ -165,7 +164,7 @@ export default function TaxCalculator() {
     const calculate = useCallback(() => {
         const absent = parseInt(daysAbsent) || 0;
         const late = parseInt(minutesLate) || 0;
-        const meal = parseFloat(mealAllowance) || 0;
+        let meal = 29;
         const otHours = parseFloat(regularOTHours) || 0;
         const restOtHours = parseFloat(restDayOTHours) || 0;
 
@@ -216,7 +215,7 @@ export default function TaxCalculator() {
 }
 
 // Use the calculated monthly rate from daily rate for gross pay calculation
-const grossPay = (baseDailyRate * 10) + regularOTPay + restDayOTPay  + totalMealAllowance; // Adjust back to old afterwards
+const grossPay = (baseDailyRate * renderedDays) + regularOTPay + restDayOTPay  + totalMealAllowance; // Adjust back to old afterwards
         const sss = calculateSSS(monthlyRateFromDaily);
         const philhealth = calculatePhilHealth(monthlyRateFromDaily);
         const pagibig = calculatePagIbig(monthlyRateFromDaily);
@@ -253,7 +252,7 @@ const grossPay = (baseDailyRate * 10) + regularOTPay + restDayOTPay  + totalMeal
             restDayOTPay,
             department
         });
-    }, [daysAbsent, minutesLate, mealAllowance, regularOTHours, restDayOTHours, restDayOTType, name]);
+    }, [daysAbsent, minutesLate, regularOTHours, restDayOTHours, restDayOTType, name]);
 
     useEffect(() => {
         calculate();
@@ -507,9 +506,9 @@ const grossPay = (baseDailyRate * 10) + regularOTPay + restDayOTPay  + totalMeal
                         <div style={styles.inputGroup}>
                             <label style={styles.label}>Daily Rate (₱)</label>
                             <div style={{
-                                ...styles.input, 
-                                backgroundColor: '#f3f4f6', 
-                                display: 'flex', 
+                                ...styles.input,
+                                backgroundColor: '#f3f4f6',
+                                display: 'flex',
                                 alignItems: 'center',
                                 color: '#374151'
                             }}>
@@ -545,15 +544,15 @@ const grossPay = (baseDailyRate * 10) + regularOTPay + restDayOTPay  + totalMeal
 
                         <div style={styles.inputGroup}>
                             <label style={styles.label}>Meal Allowance Per Day (₱)</label>
-                            <input
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                value={mealAllowance}
-                                onChange={handleChangeNonNegative(setMealAllowance, false)}
-                                style={styles.input}
-                                placeholder="0"
-                            />
+                            <div style={{
+                                ...styles.input,
+                                backgroundColor: '#f3f4f6',
+                                display: 'flex',
+                                alignItems: 'center',
+                                color: '#374151'
+                            }}>
+                                {'₱ 29.00 (Constant Value)'}
+                            </div>
                         </div>
 
                         <div style={styles.inputGroup}>
