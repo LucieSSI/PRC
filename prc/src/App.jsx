@@ -210,13 +210,13 @@ export default function TaxCalculator() {
                 restDayOTPay = hourlyRate * rates.first8 * restOtHours;
             } else {
                 const first8 = 8;
-                const succeeding = restOtHours - 8;
-                restDayOTPay = (hourlyRate * rates.first8 * first8) + (hourlyRate * rates.succeeding * succeeding);
-            }
-        }
+        const succeeding = restOtHours - 8;
+        restDayOTPay = (hourlyRate * rates.first8 * first8) + (hourlyRate * rates.succeeding * succeeding);
+    }
+}
 
-        // Use the calculated monthly rate from daily rate for gross pay calculation
-        const grossPay = (monthlyRateFromDaily / 2) + regularOTPay + restDayOTPay - absentAmount - lateAmount;
+// Use the calculated monthly rate from daily rate for gross pay calculation
+const grossPay = (baseDailyRate * 10) + regularOTPay + restDayOTPay - absentAmount - lateAmount; // Adjust back to old afterwards
         const sss = calculateSSS(monthlyRateFromDaily);
         const philhealth = calculatePhilHealth(monthlyRateFromDaily);
         const pagibig = calculatePagIbig(monthlyRateFromDaily);
@@ -224,7 +224,7 @@ export default function TaxCalculator() {
         const taxBase = grossPay - sss - philhealth - pagibig - totalMealAllowance;
         const tax = calculateTax(taxBase); // This is already semi-monthly tax, but we need monthly
         const monthlyTax = tax * 2; // Convert semi-monthly to monthly
-        const shuttleAllocation = 10 * 10;
+        const shuttleAllocation = 0;
         const totalDeductions = sss + philhealth + pagibig + monthlyTax + shuttleAllocation;
         const netPay = grossPay - totalDeductions;
 
