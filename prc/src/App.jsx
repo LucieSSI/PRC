@@ -224,7 +224,7 @@ const grossPay = (baseDailyRate * renderedDays) + regularOTPay + restDayOTPay  +
         const tax = calculateTax(taxBase); // This is already semi-monthly tax, but we need monthly
         const monthlyTax = tax * 2; // Convert semi-monthly to monthly
         const shuttleAllocation = 0;
-        const totalDeductions = sss + philhealth + pagibig + monthlyTax + shuttleAllocation + absentAmount + lateAmount;
+        const totalDeductions = sss + philhealth + pagibig + monthlyTax + shuttleAllocation + lateAmount;
         const netPay = grossPay - totalDeductions;
 
         setResults({
